@@ -73,6 +73,54 @@ html,
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Brand Color Palette */
+  --color-brand-blue: #163b7c;
+  --color-grey: #7e7e7e;
+  --color-accent: #00d1b2;
+  --color-text-primary: #262626;
+  --color-text-secondary: #7e7e7e;
+  --color-text-tertiary: #476189;
+  --color-text-quaternary: #091b3b;
+  --color-primary: #163b7c;
+  --color-primary-dark: #041328;
+  --color-primary-light: #005c8e;
+  --color-primary-bg: #efefef;
+  --color-primary-deep: #202d59;
+  --color-primary-bg-light: #dce7ec;
+  --color-primary-lightest: #f5f8fc;
+  --color-primary-dark-light: #06152d;
+  --color-secondary: #55b56c;
+  --color-secondary-light: #bbe1c4;
+  --color-positive: #029447;
+  --color-warning: #ed8c22;
+  --color-warning-alt: #ffd108;
+  --color-warning-light: #ffb40026;
+  --color-danger: #dc272c;
+  --color-danger-alt: #ff7c5c;
+  --color-danger-light: #ff7c5c0d;
+  --color-accent-light: #00d1b20d;
+  --color-neutral: #7e7e7e;
+  --color-neutral-dark: #3c3c3c;
+  --color-neutral-darker: #262626;
+  --color-neutral-light: #aebdd1;
+  --color-surface: #fff;
+  --color-subinfo: #476189;
+  --color-primary-border: #e9efff;
+  --color-gradient-primary: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  --color-gradient-secondary: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-light));
+  --color-custom-primary: #e8eaee;
+  --color-custom-warning: #fff2f1;
+  --color-custom-secondary: #ecf9f0;
+  --color-shadow-primary: #dce4ef;
+  --color-stat-icon-gradient: linear-gradient(0deg, #bbe1c4, #163b7c00);
+  --color-notification-meter-gradient: linear-gradient(179.43deg, #ffe2e2 -0.52%, #dc272c 100.53%);
+  --color-notification-ticket-gradient: linear-gradient(179.43deg, #e6f2ff -0.52%, #163b7c 100.53%);
+  --color-notification-alert-gradient: linear-gradient(179.43deg, #ffe2e2 -0.52%, #dc272c 100.53%);
+  --color-notification-success-gradient: linear-gradient(179.43deg, #e6ffe6 -0.52%, #22c55e 100.53%);
+  --color-notification-warning-gradient: linear-gradient(179.43deg, #fff4e6 -0.52%, #ed8c22 100.53%);
+  --color-notification-system-gradient: linear-gradient(179.43deg, #f5f5f5 -0.52%, #6b7280 100.53%);
+  --color-notification-default-gradient: linear-gradient(179.43deg, #e6f2ff -0.52%, #163b7c 100.53%);
 }
 
 body {
@@ -84,7 +132,5 @@ body {
 
 #root {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
 }

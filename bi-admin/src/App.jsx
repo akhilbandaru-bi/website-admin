@@ -1,10 +1,7 @@
+import Login from './pages/Login';
+
 function App() {
-  return (
-    <div>
-      <h1>Welcome to React + Vite</h1>
-      <p>Start building your app here.</p>
-    </div>
-  );
+  return <Login />;
 }
 
 export default App;

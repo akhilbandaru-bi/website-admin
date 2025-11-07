@@ -1,0 +1,39 @@
+.squircle-input-wrapper {
+  width: 100%;
+  background: var(--color-primary-bg);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.squircle-input-wrapper:focus-within {
+  background: var(--color-primary-lightest);
+}
+
+.squircle-input {
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  outline: none;
+  background: #f9f9f9;
+  font-family: 'Manrope', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.squircle-input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+.squircle-input:focus {
+  outline: none;
+}
+
+@media (max-width: 768px) {
+  .squircle-input {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}

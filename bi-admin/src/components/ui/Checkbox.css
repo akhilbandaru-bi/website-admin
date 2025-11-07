@@ -1,0 +1,72 @@
+.squircle-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.squircle-checkbox-wrapper {
+  width: 24px;
+  height: 24px;
+  background: var(--color-surface);
+  border: 2px solid #f9f9f9;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.squircle-checkbox-wrapper:hover {
+  border-color: var(--color-secondary);
+}
+
+.squircle-checkbox-wrapper.checked {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+.squircle-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.squircle-checkbox-checkmark {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.squircle-checkbox-label-text {
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .squircle-checkbox-label {
+    gap: 8px;
+  }
+
+  .squircle-checkbox-wrapper {
+    width: 22px;
+    height: 22px;
+  }
+
+  .squircle-checkbox-checkmark {
+    width: 12px;
+    height: 12px;
+  }
+
+  .squircle-checkbox-label-text {
+    font-size: 13px;
+  }
+}
