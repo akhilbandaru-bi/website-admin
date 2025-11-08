@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Squircle } from '@squircle-js/react';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -6,6 +7,7 @@ import Checkbox from '../components/ui/Checkbox';
 import './Login.css';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -23,7 +25,8 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Login attempt:', formData);
-    // Add your login logic here
+    // Navigate to dashboard on successful login
+    navigate('/dashboard');
   };
 
   const handleForgotPassword = () => {

@@ -1,0 +1,74 @@
+.page-template {
+  width: 100%;
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.content-card {
+  width: 100%;
+  background: var(--color-surface);
+  box-shadow: 0 4px 16px rgba(22, 59, 124, 0.08);
+  transition: all 0.3s ease;
+}
+
+.content-card:hover {
+  box-shadow: 0 8px 24px rgba(22, 59, 124, 0.12);
+}
+
+.card-content {
+  padding: 48px 32px;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-text {
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  margin: 0;
+  font-style: italic;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 26px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+  }
+
+  .card-content {
+    padding: 32px 24px;
+    min-height: 300px;
+  }
+
+  .placeholder-text {
+    font-size: 14px;
+  }
+}
+
