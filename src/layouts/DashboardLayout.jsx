@@ -75,6 +75,7 @@ const DashboardLayout = () => {
       path: '/dashboard/blogs',
       icon: '/icons/blogs.svg',
       children: [
+        { id: 'blogs-list', label: 'Blog List', path: '/dashboard/blogs/list', icon: '/icons/blogs.svg' },
         { id: 'blogs-series', label: 'Series', path: '/dashboard/blogs/series', icon: '/icons/blogs.svg' },
       ],
     },
