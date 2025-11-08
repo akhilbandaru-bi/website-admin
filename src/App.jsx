@@ -10,6 +10,7 @@ import Blogs1 from '../src/pages/Blog';
 import CaseStudies1 from '../src/pages/CaseStudies1';  
 import Leads1 from '../src/pages/Leads1';
 import SubscribedUsers1 from '../src/pages/SubscribedUsers1';
+import BlogList from '../src/pages/BlogList';
 import DashboardLayout from '../src/layouts/DashboardLayout';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
           <Route path="solutions" element={<Solutions1 />} />
           <Route path="verticals" element={<Verticals1 />} />
           <Route path="blogs" element={<Blogs1 />} />
+          <Route path="blogs/list" element={<BlogList />} />
           <Route path="case-studies" element={<CaseStudies1 />} />
           <Route path="leads" element={<Leads1 />} />
           <Route path="subscribed-users" element={<SubscribedUsers1 />} />

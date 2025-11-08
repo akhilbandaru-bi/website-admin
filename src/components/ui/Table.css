@@ -1,0 +1,311 @@
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+
+.ui-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+}
+
+.ui-table thead {
+  display: none;
+}
+
+.ui-table tbody tr {
+  display: grid;
+  grid-template-columns: auto 80px minmax(200px, 1fr) minmax(160px, 200px) minmax(140px, 160px) auto auto;
+  align-items: center;
+  gap: 16px;
+  background: rgba(22, 59, 124, 0.02);
+  border-radius: 16px;
+  padding: 12px 20px;
+  transition: background 0.2s ease;
+  cursor: pointer;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.ui-table tbody tr.selected {
+  background: rgba(22, 59, 124, 0.12);
+  box-shadow: 0 10px 28px rgba(22, 59, 124, 0.16);
+}
+
+.ui-table td {
+  padding: 0;
+  border: none;
+  text-align: left;
+}
+
+.checkbox-cell {
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actions-cell {
+  width: 40px;
+  display: flex;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.table-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.table-checkbox input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.checkbox-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(9, 27, 59, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.table-checkbox input:checked + .checkbox-indicator {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(22, 59, 124, 0.15);
+}
+
+.table-checkbox input:checked + .checkbox-indicator::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.row-menu {
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  color: var(--color-text-secondary);
+  position: relative;
+  z-index: 2;
+}
+
+.row-menu:hover {
+  background: rgba(22, 59, 124, 0.08);
+  color: var(--color-primary);
+}
+
+.row-menu .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Modal Styles */
+.table-modal {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  padding: 8px 0;
+  min-width: 150px;
+  z-index: 1000;
+}
+
+.modal-button {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.modal-button:hover {
+  background: #f5f5f5;
+}
+
+.modal-button.delete {
+  color: #e74c3c;
+}
+
+.modal-button.delete:hover {
+  background: #ffebee;
+}
+
+/* Blog-specific styles that need to be included */
+.blog-thumbnail {
+  width: 64px;
+  height: 48px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #dfe5f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blog-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.blog-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.blog-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.blog-duration {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.blog-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.author-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(22, 59, 124, 0.08);
+}
+
+.blog-date {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.blog-status {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.status-private {
+  background: rgba(9, 27, 59, 0.1);
+  color: var(--color-text-tertiary);
+}
+
+.status-public {
+  background: rgba(2, 148, 71, 0.1);
+  color: var(--color-positive);
+}
+
+.status-draft {
+  background: rgba(22, 59, 124, 0.12);
+  color: var(--color-primary);
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+  .ui-table tbody tr {
+    grid-template-columns: auto 64px 1fr minmax(140px, 1fr);
+    grid-template-areas:
+      "checkbox thumb info status menu"
+      ". . meta meta meta";
+    row-gap: 12px;
+  }
+
+  .ui-table tbody tr > .checkbox-cell {
+    grid-area: checkbox;
+  }
+
+  .ui-table tbody tr > .blog-thumbnail {
+    grid-area: thumb;
+  }
+
+  .ui-table tbody tr > .blog-info {
+    grid-area: info;
+  }
+
+  .ui-table tbody tr > .blog-author,
+  .ui-table tbody tr > .blog-date {
+    grid-area: meta;
+    display: inline-flex;
+    margin-right: 24px;
+  }
+
+  .ui-table tbody tr > .blog-status {
+    grid-area: status;
+    justify-self: flex-start;
+  }
+
+  .ui-table tbody tr > .actions-cell {
+    grid-area: menu;
+    justify-self: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .ui-table tbody tr {
+    grid-template-columns: auto 56px 1fr auto;
+    grid-template-areas:
+      "checkbox thumb info menu"
+      ". . meta meta"
+      ". . status status";
+  }
+
+  .ui-table tbody tr > .blog-status {
+    align-self: flex-start;
+  }
+  
+  .table-modal {
+    right: auto;
+    left: 0;
+  }
+}
