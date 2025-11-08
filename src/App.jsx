@@ -11,6 +11,7 @@ import CreateBlog from '../src/pages/CreateBlog';
 import CaseStudies1 from '../src/pages/CaseStudies1';  
 import Leads1 from '../src/pages/Leads1';
 import SubscribedUsers1 from '../src/pages/SubscribedUsers1';
+import BlogList from '../src/pages/BlogList';
 import DashboardLayout from '../src/layouts/DashboardLayout';
 
 function App() {
@@ -24,7 +25,8 @@ function App() {
           <Route path="services" element={<Services1 />} />
           <Route path="solutions" element={<Solutions1 />} />
           <Route path="verticals" element={<Verticals1 />} />
-          <Route path="blogs" element={<Blogs1 />} />
+          <Route path="blogs" element={<Blogs1 />} />\
+          <Route path="blogs/list" element={<BlogList />} />
           <Route path="blogs/create" element={<CreateBlog />} />
           <Route path="case-studies" element={<CaseStudies1 />} />
           <Route path="leads" element={<Leads1 />} />
