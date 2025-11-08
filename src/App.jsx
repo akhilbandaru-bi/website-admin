@@ -12,6 +12,8 @@ import CaseStudies1 from '../src/pages/CaseStudies1';
 import Leads1 from '../src/pages/Leads1';
 import SubscribedUsers1 from '../src/pages/SubscribedUsers1';
 import DashboardLayout from '../src/layouts/DashboardLayout';
+import CreateService from '../src/pages/CreateService';
+import CreateCaseStudy from '../src/pages/CreateCaseStudy';
 
 function App() {
   return (
@@ -22,11 +24,13 @@ function App() {
           <Route index element={<Dashboard1 />} />
           <Route path="pages" element={<Pages1 />} />
           <Route path="services" element={<Services1 />} />
+          <Route path="services/create" element={<CreateService />} />
           <Route path="solutions" element={<Solutions1 />} />
           <Route path="verticals" element={<Verticals1 />} />
           <Route path="blogs" element={<Blogs1 />} />
           <Route path="blogs/create" element={<CreateBlog />} />
           <Route path="case-studies" element={<CaseStudies1 />} />
+          <Route path="case-studies/create" element={<CreateCaseStudy />} />
           <Route path="leads" element={<Leads1 />} />
           <Route path="subscribed-users" element={<SubscribedUsers1 />} />
         </Route>
