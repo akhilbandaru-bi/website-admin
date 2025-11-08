@@ -9,6 +9,7 @@ const DashboardLayout = () => {
   const viewportIsMobile = useRef(null);
   const sidebarRef = useRef(null);
   const [squircleVersion, setSquircleVersion] = useState(0);
+  const [expandedSections, setExpandedSections] = useState(() => new Set());
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,19 +50,60 @@ const DashboardLayout = () => {
     return () => observer.disconnect();
   }, []);
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: '/icons/dashboard.svg' },
-    { id: 'pages', label: 'Pages', path: '/dashboard/pages', icon: '/icons/web.svg' },
-    { id: 'services', label: 'Services', path: '/dashboard/services', icon: '/icons/services.svg' },
-    { id: 'solutions', label: 'Solutions', path: '/dashboard/solutions', icon: '/icons/solutions.svg' },
-    { id: 'verticals', label: 'Verticals', path: '/dashboard/verticals', icon: '/icons/verticals.svg' },
-    { id: 'blogs', label: 'Blogs', path: '/dashboard/blogs', icon: '/icons/blogs.svg' },
-    { id: 'case-studies', label: 'Case Studies', path: '/dashboard/case-studies', icon: '/icons/case-studies.svg' },
-    { id: 'leads', label: 'Leads', path: '/dashboard/leads', icon: '/icons/leads.svg' },
-    { id: 'subscribed-users', label: 'Subscribed Users', path: '/dashboard/subscribed-users', icon: '/icons/subscribed-users.svg' },
+  const menuSections = [
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      path: '/dashboard',
+      icon: '/icons/dashboard.svg',
+    },
+    {
+      id: 'pages',
+      label: 'Pages',
+      path: '/dashboard/pages',
+      icon: '/icons/pages.svg',
+      children: [
+        { id: 'pages-services', label: 'Services', path: '/dashboard/services', icon: '/icons/services.svg' },
+        { id: 'pages-verticals', label: 'Verticals', path: '/dashboard/verticals', icon: '/icons/verticals.svg' },
+        { id: 'pages-products', label: 'Products', path: '/dashboard/products', icon: '/icons/pages.svg' },
+        { id: 'pages-solutions', label: 'Solutions', path: '/dashboard/solutions', icon: '/icons/solutions.svg' },
+      ],
+    },
+    {
+      id: 'blogs',
+      label: 'Blogs',
+      path: '/dashboard/blogs',
+      icon: '/icons/blogs.svg',
+      children: [
+        { id: 'blogs-series', label: 'Series', path: '/dashboard/blogs/series', icon: '/icons/blogs.svg' },
+      ],
+    },
+    {
+      id: 'case-studies',
+      label: 'Case Studies',
+      path: '/dashboard/case-studies',
+      icon: '/icons/case-studies.svg',
+      children: [
+        { id: 'case-studies-submenus', label: 'Submenus', path: '/dashboard/case-studies/submenus', icon: '/icons/case-studies.svg' },
+      ],
+    },
+    {
+      id: 'marketing',
+      label: 'Marketing',
+      path: '/dashboard/marketing',
+      icon: '/icons/leads.svg',
+      children: [
+        { id: 'marketing-leads', label: 'Leads', path: '/dashboard/leads', icon: '/icons/leads.svg' },
+        { id: 'marketing-analytics', label: 'Analytics', path: '/dashboard/marketing/analytics', icon: '/icons/dashboard.svg' },
+        { id: 'marketing-newsletters', label: 'News Letters', path: '/dashboard/marketing/newsletters', icon: '/icons/subscribed-users.svg' },
+        { id: 'marketing-landing-pages', label: 'Landing Pages', path: '/dashboard/marketing/landing-pages', icon: '/icons/pages.svg' },
+        { id: 'marketing-demos', label: "Demo's", path: '/dashboard/marketing/demos', icon: '/icons/solutions.svg' },
+      ],
+    },
   ];
 
   const handleMenuClick = (path) => {
+    if (!path) return;
     navigate(path);
     // Close sidebar on mobile after navigation
     if (isMobile) {
@@ -69,11 +111,46 @@ const DashboardLayout = () => {
     }
   };
 
-  const isActive = (path) => {
+  const pathMatches = (path) => {
+    if (!path) return false;
     if (path === '/dashboard') {
       return location.pathname === '/dashboard';
     }
-    return location.pathname.startsWith(path);
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const isSectionActive = (section) => {
+    if (pathMatches(section.path)) return true;
+    if (section.children) {
+      return section.children.some((child) => pathMatches(child.path));
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      menuSections.forEach((section) => {
+        if (isSectionActive(section)) {
+          next.add(section.id);
+        }
+      });
+      return next;
+    });
+  }, [location.pathname]);
+
+  const isSectionExpanded = (sectionId) => expandedSections.has(sectionId);
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
   };
 
   const handleLogout = () => {
@@ -115,24 +192,84 @@ const DashboardLayout = () => {
           </div>
           
           <nav className="sidebar-nav">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
-                onClick={() => handleMenuClick(item.path)}
-                title={item.label}
-              >
-                <span className="nav-item-icon" aria-hidden="true">
-                  <img src={item.icon} alt="" />
-                </span>
-                <span className="nav-item-label">{item.label}</span>
-              </button>
-            ))}
+            {menuSections.map((section) => {
+              const sectionActive = isSectionActive(section);
+              const hasChildren = Array.isArray(section.children) && section.children.length > 0;
+              const sectionExpanded = hasChildren ? isSectionExpanded(section.id) : false;
+
+              return (
+                <div
+                  className={`nav-section ${hasChildren ? 'has-children' : ''} ${
+                    sectionActive ? 'active' : ''
+                  } ${sectionExpanded ? 'expanded' : ''}`}
+                  key={section.id}
+                >
+                  <button
+                    className={`nav-item ${hasChildren ? 'has-children' : ''} ${
+                      sectionActive ? 'active' : ''
+                    }`}
+                    type="button"
+                    aria-expanded={hasChildren ? sectionExpanded : undefined}
+                    onClick={() => handleMenuClick(section.path)}
+                    title={section.label}
+                  >
+                    <span className="nav-item-icon" aria-hidden="true">
+                      <img src={section.icon} alt="" />
+                    </span>
+                    <span className="nav-item-label">{section.label}</span>
+                    {hasChildren && (
+                      <span
+                        className="nav-item-caret"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={sectionExpanded ? 'Collapse section' : 'Expand section'}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleSection(section.id);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            toggleSection(section.id);
+                          }
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M5.5 3.5L10.5 8L5.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    )}
+                  </button>
+
+                  {hasChildren && (
+                    <div className={`nav-subitems ${sectionActive ? 'active' : ''} ${sectionExpanded ? 'expanded' : ''}`}>
+                      {section.children.map((child) => (
+                        <button
+                          type="button"
+                          key={child.id}
+                          className={`nav-subitem ${pathMatches(child.path) ? 'active' : ''}`}
+                          onClick={() => handleMenuClick(child.path)}
+                          title={child.label}
+                        >
+                          <span className="nav-subitem-icon" aria-hidden="true">
+                            <img src={child.icon} alt="" />
+                          </span>
+                          <span className="nav-subitem-label">{child.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
 
           <div className="sidebar-footer">
             <button className="logout-button" onClick={handleLogout}>
-              <img src="/icons/logout.svg" alt="Logout" />
+              <span className="logout-button-icon" aria-hidden="true">
+                <img src="/icons/logout.svg" alt="Logout" />
+              </span>
               <span className="logout-button-text">Logout</span>
             </button>
           </div>
