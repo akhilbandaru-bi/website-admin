@@ -1,0 +1,95 @@
+.app-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.app-toggle.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.app-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+}
+
+.app-toggle-track {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(22, 59, 124, 0.18);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.app-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 4px 10px rgba(13, 45, 110, 0.2);
+  transition: all 0.25s ease;
+}
+
+.app-toggle-input:focus + .app-toggle-track {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(22, 59, 124, 0.18);
+}
+
+.app-toggle-input:checked + .app-toggle-track {
+  background: var(--color-primary);
+}
+
+.app-toggle-input:checked + .app-toggle-track .app-toggle-thumb {
+  transform: translateX(22px);
+}
+
+.app-toggle-status {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.app-toggle-input:checked ~ .app-toggle-status {
+  color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+  .app-toggle {
+    gap: 10px;
+  }
+
+  .app-toggle-track {
+    width: 44px;
+  }
+
+  .app-toggle-thumb {
+    width: 20px;
+    height: 20px;
+    top: 3px;
+    left: 3px;
+  }
+
+  .app-toggle-input:checked + .app-toggle-track .app-toggle-thumb {
+    transform: translateX(18px);
+  }
+}
+

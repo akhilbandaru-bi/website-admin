@@ -1,0 +1,125 @@
+.tag-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.tag-input-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.tag-input-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(22, 59, 124, 0.16);
+  background: var(--color-surface);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: text;
+}
+
+.tag-input-container.has-tags {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.tag-input-container:is(:focus-within):not(.is-disabled) {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(22, 59, 124, 0.12);
+}
+
+.tag-input-container.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.tag-input-tags {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.tag-input-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(22, 59, 124, 0.1);
+  color: var(--color-primary);
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.tag-input-chip-text {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-input-chip-remove {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(22, 59, 124, 0.2);
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.tag-input-chip-remove:hover {
+  background: rgba(22, 59, 124, 0.35);
+}
+
+.tag-input-chip-remove:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(22, 59, 124, 0.2);
+}
+
+.tag-input-field {
+  flex: 1 1 140px;
+  min-width: 140px;
+  border: none;
+  outline: none;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  background: transparent;
+  padding: 6px 4px;
+}
+
+.tag-input-field:disabled {
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .tag-input-container {
+    min-height: 44px;
+    gap: 6px;
+  }
+
+  .tag-input-field {
+    min-width: 120px;
+  }
+
+  .tag-input-chip-text {
+    max-width: 120px;
+  }
+}
+

@@ -6,6 +6,24 @@
     margin-bottom: 32px;
   }
   
+  .blog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .page-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .page-header-action {
+    margin-left: auto;
+  }
+  
   .page-title {
     font-family: 'Manrope', sans-serif;
     font-size: 32px;
@@ -60,6 +78,15 @@
   
     .page-subtitle {
       font-size: 14px;
+    }
+
+    .page-header-action {
+      width: 100%;
+      margin-left: 0;
+    }
+  
+    .page-header-action .squircle-button {
+      width: 100%;
     }
   
     .card-content {
