@@ -50,55 +50,57 @@ const DashboardLayout = () => {
     return () => observer.disconnect();
   }, []);
 
+  const iconPath = (filename) => `${import.meta.env.BASE_URL}icons/${filename}`;
+
   const menuSections = [
     {
       id: 'dashboard',
       label: 'Dashboard',
       path: '/dashboard',
-      icon: '/icons/dashboard.svg',
+      icon: iconPath('dashboard.svg'),
     },
     {
       id: 'pages',
       label: 'Pages',
       path: '/dashboard/pages',
-      icon: '/icons/pages.svg',
+      icon: iconPath('pages.svg'),
       children: [
-        { id: 'pages-services', label: 'Services', path: '/dashboard/services', icon: '/icons/services.svg' },
-        { id: 'pages-verticals', label: 'Verticals', path: '/dashboard/verticals', icon: '/icons/verticals.svg' },
-        { id: 'pages-products', label: 'Products', path: '/dashboard/products', icon: '/icons/pages.svg' },
-        { id: 'pages-solutions', label: 'Solutions', path: '/dashboard/solutions', icon: '/icons/solutions.svg' },
+        { id: 'pages-services', label: 'Services', path: '/dashboard/services', icon: iconPath('services.svg') },
+        { id: 'pages-verticals', label: 'Verticals', path: '/dashboard/verticals', icon: iconPath('verticals.svg') },
+        { id: 'pages-products', label: 'Products', path: '/dashboard/products', icon: iconPath('pages.svg') },
+        { id: 'pages-solutions', label: 'Solutions', path: '/dashboard/solutions', icon: iconPath('solutions.svg') },
       ],
     },
     {
       id: 'blogs',
       label: 'Blogs',
       path: '/dashboard/blogs',
-      icon: '/icons/blogs.svg',
+      icon: iconPath('blogs.svg'),
       children: [
-        { id: 'blogs-list', label: 'Blog List', path: '/dashboard/blogs/list', icon: '/icons/blogs.svg' },
-        { id: 'blogs-series', label: 'Series', path: '/dashboard/blogs/series', icon: '/icons/blogs.svg' },
+        { id: 'blogs-list', label: 'Blog List', path: '/dashboard/blogs/list', icon: iconPath('blogs.svg') },
+        { id: 'blogs-series', label: 'Series', path: '/dashboard/blogs/series', icon: iconPath('blogs.svg') },
       ],
     },
     {
       id: 'case-studies',
       label: 'Case Studies',
       path: '/dashboard/case-studies',
-      icon: '/icons/case-studies.svg',
+      icon: iconPath('case-studies.svg'),
       children: [
-        { id: 'case-studies-submenus', label: 'Submenus', path: '/dashboard/case-studies/submenus', icon: '/icons/case-studies.svg' },
+        { id: 'case-studies-submenus', label: 'Submenus', path: '/dashboard/case-studies/submenus', icon: iconPath('case-studies.svg') },
       ],
     },
     {
       id: 'marketing',
       label: 'Marketing',
       path: '/dashboard/marketing',
-      icon: '/icons/leads.svg',
+      icon: iconPath('leads.svg'),
       children: [
-        { id: 'marketing-leads', label: 'Leads', path: '/dashboard/leads', icon: '/icons/leads.svg' },
-        { id: 'marketing-analytics', label: 'Analytics', path: '/dashboard/marketing/analytics', icon: '/icons/dashboard.svg' },
-        { id: 'marketing-newsletters', label: 'News Letters', path: '/dashboard/marketing/newsletters', icon: '/icons/subscribed-users.svg' },
-        { id: 'marketing-landing-pages', label: 'Landing Pages', path: '/dashboard/marketing/landing-pages', icon: '/icons/pages.svg' },
-        { id: 'marketing-demos', label: "Demo's", path: '/dashboard/marketing/demos', icon: '/icons/solutions.svg' },
+        { id: 'marketing-leads', label: 'Leads', path: '/dashboard/leads', icon: iconPath('leads.svg') },
+        { id: 'marketing-analytics', label: 'Analytics', path: '/dashboard/marketing/analytics', icon: iconPath('dashboard.svg') },
+        { id: 'marketing-newsletters', label: 'News Letters', path: '/dashboard/marketing/newsletters', icon: iconPath('subscribed-users.svg') },
+        { id: 'marketing-landing-pages', label: 'Landing Pages', path: '/dashboard/marketing/landing-pages', icon: iconPath('pages.svg') },
+        { id: 'marketing-demos', label: "Demo's", path: '/dashboard/marketing/demos', icon: iconPath('solutions.svg') },
       ],
     },
   ];
@@ -185,7 +187,7 @@ const DashboardLayout = () => {
               aria-label="Toggle sidebar"
             >
               <img
-                src="/icons/menu-toggle.svg"
+                src={iconPath('menu-toggle.svg')}
                 alt="Toggle menu"
                 className="sidebar-toggle-icon"
               />
@@ -269,7 +271,7 @@ const DashboardLayout = () => {
           <div className="sidebar-footer">
             <button className="logout-button" onClick={handleLogout}>
               <span className="logout-button-icon" aria-hidden="true">
-                <img src="/icons/logout.svg" alt="Logout" />
+                <img src={iconPath('logout.svg')} alt="Logout" />
               </span>
               <span className="logout-button-text">Logout</span>
             </button>
@@ -285,7 +287,7 @@ const DashboardLayout = () => {
             aria-label="Toggle menu"
           >
             <img
-              src="/icons/mobile-menu.svg"
+              src={iconPath('mobile-menu.svg')}
               alt="Toggle menu"
               className="mobile-menu-icon"
             />
