@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Squircle } from '@squircle-js/react';
 import Button from '../components/ui/Button';
 import Dropdown from '../components/ui/Dropdown';
@@ -6,12 +7,7 @@ import Toggle from '../components/ui/Toggle';
 import TextEditor from '../components/ui/TextEditor';
 import TagInput from '../components/ui/TagInput';
 import './CreateBlog.css';
-
-const tabs = [
-  { id: 'form', label: 'Form Builder', description: 'Capture the blog essentials' },
-  { id: 'preview', label: 'Live Preview', description: 'Review before publishing' },
-  { id: 'export', label: 'Content Export', description: 'Copy structured JSON' },
-];
+import { createBlog, updateBlog, extractBlogId, getBlogById } from '../api/blogs';
 
 const blogCategories = [
   'Technology',
@@ -129,6 +125,86 @@ const iconMap = {
 const CreateBlog = () => {
   const [activeTab, setActiveTab] = useState('form');
   const [blogData, setBlogData] = useState(initialBlogData);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const navigate = useNavigate();
+  const [blogId, setBlogId] = useState(null);
+  const [autoSaveState, setAutoSaveState] = useState('idle'); // idle | saving | saved | error
+  const autoSaveTimerRef = useRef(null);
+  const isMountedRef = useRef(false);
+  const AUTO_SAVE_DELAY_MS = 1000;
+  const [searchParams] = useSearchParams();
+  const skipNextAutoSaveRef = useRef(false);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [initialLoadError, setInitialLoadError] = useState('');
+  useEffect(() => {
+    const idParam = searchParams.get('id');
+    if (!idParam) return;
+    setInitialLoading(true);
+    setInitialLoadError('');
+    skipNextAutoSaveRef.current = true;
+    (async () => {
+      try {
+        const data = await getBlogById(idParam);
+        // Try common response shapes
+        const blog = data?.blog || data?.data || data;
+        if (blog && typeof blog === 'object') {
+          setBlogId(blog._id || blog.id || idParam);
+          setBlogData((prev) => ({
+            ...prev,
+            title: blog.title || '',
+            slug: blog.slug || '',
+            introTitle: blog.introTitle || '',
+            summary: blog.summary || '',
+            category: blog.category || '',
+            readTime: blog.readTime || blog.read_time_minutes || 0,
+            views: blog.views || 0,
+            likes: blog.likes || 0,
+            viewsEnabled: blog.viewsEnabled ?? blog.views_enabled ?? true,
+            likesEnabled: blog.likesEnabled ?? blog.likes_enabled ?? true,
+            metaTitle: blog.metaTitle || blog.meta_title || '',
+            metaDescription: blog.metaDescription || blog.meta_description || '',
+            keywords: Array.isArray(blog.keywords)
+              ? blog.keywords.join(',')
+              : blog.keywords || '',
+            tags: Array.isArray(blog.tags) ? blog.tags.join(',') : blog.tags || '',
+            densityTarget: blog.densityTarget || blog.density_target || '',
+            content: blog.content || blog.contentHtml || blog.content_html || '',
+            imageUrls: Array.isArray(blog.imageUrls)
+              ? blog.imageUrls.join(',')
+              : blog.imageUrls || '',
+            authorName: blog.authorName || blog.author_name || '',
+            authorImage: blog.authorImage || blog.author_image_url || '',
+            publishedDate:
+              blog.publishedDate || blog.published_at
+                ? String(blog.publishedDate || blog.published_at).substring(0, 10)
+                : '',
+            updatedDate:
+              blog.updatedDate || blog.content_updated_at
+                ? String(blog.updatedDate || blog.content_updated_at).substring(0, 10)
+                : '',
+            recentBlogs: Array.isArray(blog.recentBlogs)
+              ? blog.recentBlogs.join('\n')
+              : blog.recentBlogs || '',
+            trendingNews: Array.isArray(blog.trendingNews)
+              ? blog.trendingNews.join('\n')
+              : blog.trendingNews || '',
+            ctaTitle: blog.ctaTitle || blog.cta_title || '',
+            ctaDescription: blog.ctaDescription || blog.cta_description || '',
+            ctaButtonText: blog.ctaButtonText || blog.cta_button_text || '',
+            newsletterCta: blog.newsletterCta || blog.newsletter_cta || '',
+          }));
+        }
+      } catch (e) {
+        setInitialLoadError(e?.message || 'Failed to load blog data.');
+      } finally {
+        setInitialLoading(false);
+        // Allow next edits to autosave
+        setTimeout(() => { skipNextAutoSaveRef.current = false; }, 0);
+      }
+    })();
+  }, []);
 
   const parseDelimitedInput = useCallback((rawValue) => {
     if (!rawValue) {
@@ -207,6 +283,109 @@ const CreateBlog = () => {
     });
   }, [estimatedReadTime]);
 
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    // Only attempt save when required fields available
+    if (!blogData.title?.trim() || !blogData.summary?.trim()) {
+      setAutoSaveState('idle');
+      return;
+    }
+    if (skipNextAutoSaveRef.current) {
+      return;
+    }
+    setAutoSaveState('saving');
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        const payload = buildPayload();
+        if (!blogId) {
+          const result = await createBlog(payload);
+          const createdId = extractBlogId(result);
+          if (createdId) setBlogId(createdId);
+        } else {
+          await updateBlog(blogId, payload);
+        }
+        setAutoSaveState('saved');
+        setErrorMessage('');
+      } catch (e) {
+        setAutoSaveState('error');
+        setErrorMessage(e?.message || 'Auto-save failed.');
+      }
+    }, AUTO_SAVE_DELAY_MS);
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [blogData]);
+
+  const buildPayload = () => {
+    const payload = {
+      title: blogData.title?.trim(),
+      summary: blogData.summary?.trim(),
+      category: blogData.category || undefined,
+      readTime: blogData.readTime || undefined,
+      introTitle: blogData.introTitle || undefined,
+      content: blogData.content || undefined,
+      metaTitle: blogData.metaTitle || undefined,
+      metaDescription: blogData.metaDescription || undefined,
+      keywords: blogData.keywords || undefined,
+      tags: blogData.tags || undefined,
+      imageUrls: blogData.imageUrls || undefined,
+      authorName: blogData.authorName || undefined,
+      authorImage: blogData.authorImage || undefined,
+      publishedDate: blogData.publishedDate || undefined,
+      updatedDate: blogData.updatedDate || undefined,
+      newsletterCta: blogData.newsletterCta || undefined,
+      ctaTitle: blogData.ctaTitle || undefined,
+      ctaDescription: blogData.ctaDescription || undefined,
+      ctaButtonText: blogData.ctaButtonText || undefined,
+      viewsEnabled: blogData.viewsEnabled,
+      likesEnabled: blogData.likesEnabled
+    };
+    if (blogData.slug && blogData.slug.trim()) {
+      payload.slug = blogData.slug.trim();
+    }
+    return payload;
+  };
+
+  const handleSubmit = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!blogData.title?.trim() || !blogData.summary?.trim()) {
+      setErrorMessage('Please provide both Title and Summary.');
+      window.alert('Please provide both Title and Summary before saving.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const payload = buildPayload();
+      if (!blogId) {
+        const result = await createBlog(payload);
+        const createdId = extractBlogId(result);
+        if (createdId) setBlogId(createdId);
+      } else {
+        await updateBlog(blogId, payload);
+      }
+      setSuccessMessage('Blog created successfully.');
+      window.alert('Blog saved successfully.');
+      // Navigate to list
+      navigate('/dashboard/blogs/list');
+    } catch (err) {
+      setErrorMessage(err?.message || 'Failed to create blog.');
+      window.alert(err?.message || 'Failed to save blog.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="page-template blog-create">
       <div className="page-header blog-create-header">
@@ -216,9 +395,25 @@ const CreateBlog = () => {
             Craft a new article, optimize for SEO, and prepare it for publishing.
           </p>
         </div>
+        <div className="page-header-status" aria-live="polite">
+          {autoSaveState === 'saving' && <span>Saving…</span>}
+          {autoSaveState === 'saved' && <span>Saved</span>}
+          {autoSaveState === 'error' && <span className="text-error">Auto-save failed</span>}
+        </div>
       </div>
 
       <div className="blog-create-body">
+        {initialLoading && (
+          <div className="blog-alert info">Loading blog…</div>
+        )}
+        {initialLoadError && (
+          <div className="blog-alert error">{initialLoadError}</div>
+        )}
+        {(errorMessage || successMessage) && (
+          <div className={`blog-alert ${errorMessage ? 'error' : 'success'}`}>
+            {errorMessage || successMessage}
+          </div>
+        )}
         <div className="blog-tabs">
           <div className={`blog-tab-content ${activeTab === 'form' ? 'active' : ''}`}>
             <div className="blog-form-content">
@@ -648,9 +843,10 @@ const CreateBlog = () => {
                 <Button
                   className="blog-preview-btn"
                   variant="primary"
-                  onClick={() => setActiveTab('preview')}
+                  onClick={handleSubmit}
+                  disabled={submitting}
                 >
-                Submit
+                {submitting ? 'Submitting...' : 'Submit'}
                 </Button>
               </div>
             </div>

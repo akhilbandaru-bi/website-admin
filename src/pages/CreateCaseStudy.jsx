@@ -1,10 +1,17 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Squircle } from '@squircle-js/react';
+import { useSearchParams } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Dropdown from '../components/ui/Dropdown';
 import Toggle from '../components/ui/Toggle';
 import './PageTemplate1.css';
 import './CreateCaseStudy.css';
+import {
+  createCaseStudy,
+  updateCaseStudy,
+  getCaseStudyById,
+  extractCaseStudyId,
+} from '../api/caseStudies';
 
 
 const metricTemplate = { label: '', value: '', order: '' };
@@ -14,6 +21,27 @@ const tocTemplate = { title: '', anchor: '' };
 const contactEntryTemplate = { label: '', value: '', icon: '' };
 const formFieldTemplate = { label: '', placeholder: '', type: '' };
 const recentBlogTemplate = { title: '', link: '' };
+
+const cloneTemplate = (template) => JSON.parse(JSON.stringify(template));
+const ensureList = (value, template) => {
+  if (Array.isArray(value) && value.length) {
+    return value.map((item) => ({ ...cloneTemplate(template), ...item }));
+  }
+  return [cloneTemplate(template)];
+};
+const pruneList = (list, keys) =>
+  (Array.isArray(list) ? list : []).filter((item = {}) =>
+    keys.some((key) => {
+      const value = item[key];
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      if (typeof value === 'number') {
+        return true;
+      }
+      return typeof value === 'string' ? value.trim().length > 0 : Boolean(value);
+    }),
+  );
 
 const caseStudyCategories = [
   'Energy & Utilities',
@@ -80,6 +108,117 @@ const initialCaseStudyData = {
 const CreateCaseStudy = () => {
   const [activeTab, setActiveTab] = useState('form');
   const [caseStudyData, setCaseStudyData] = useState(initialCaseStudyData);
+  const [caseStudyId, setCaseStudyId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [autoSaveState, setAutoSaveState] = useState('idle'); // idle | saving | saved | error
+  const autoSaveTimerRef = useRef(null);
+  const isMountedRef = useRef(false);
+  const skipNextAutoSaveRef = useRef(false);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [initialLoadError, setInitialLoadError] = useState('');
+  const [searchParams] = useSearchParams();
+  const AUTO_SAVE_DELAY_MS = 1200;
+
+  useEffect(() => {
+    const idParam = searchParams.get('id');
+    if (!idParam) {
+      return;
+    }
+    setInitialLoading(true);
+    setInitialLoadError('');
+    skipNextAutoSaveRef.current = true;
+    (async () => {
+      try {
+        const response = await getCaseStudyById(idParam);
+        const caseStudy = response?.caseStudy || response?.data || response;
+        if (!caseStudy || typeof caseStudy !== 'object') {
+          setInitialLoadError('Case study not found.');
+          return;
+        }
+        setCaseStudyId(caseStudy.id || caseStudy._id || idParam);
+        setCaseStudyData({
+          ...initialCaseStudyData,
+          heroTitle: caseStudy.heroTitle || caseStudy.hero_title || '',
+          heroSubtitle: caseStudy.heroSubtitle || caseStudy.hero_subtitle || '',
+          category: caseStudy.category || '',
+          publishedDate:
+            caseStudy.publishedDate || caseStudy.published_at
+              ? String(caseStudy.publishedDate || caseStudy.published_at).substring(0, 10)
+              : '',
+          showLikes: caseStudy.showLikes ?? caseStudy.show_likes ?? true,
+          featured: caseStudy.featured ?? false,
+          tableOfContents: ensureList(
+            caseStudy.tableOfContents || caseStudy.table_of_contents,
+            tocTemplate,
+          ),
+          progressTag: caseStudy.progressTag || caseStudy.progress_tag || '',
+          progressTitle: caseStudy.progressTitle || caseStudy.progress_title || '',
+          progressDescription:
+            caseStudy.progressDescription || caseStudy.progress_description || '',
+          progressBackgroundVideo:
+            caseStudy.progressBackgroundVideo || caseStudy.progress_background_video || '',
+          progressButtonLabel:
+            caseStudy.progressButtonLabel || caseStudy.progress_button_label || '',
+          metrics: ensureList(caseStudy.metrics || caseStudy.metrics_json, metricTemplate),
+          clientTag: caseStudy.clientTag || caseStudy.client_tag || '',
+          clientName: caseStudy.clientName || caseStudy.client_name || '',
+          clientDescription: caseStudy.clientDescription || caseStudy.client_description || '',
+          clientImageOne: caseStudy.clientImageOne || caseStudy.client_image_one || '',
+          clientImageTwo: caseStudy.clientImageTwo || caseStudy.client_image_two || '',
+          challengesTag: caseStudy.challengesTag || caseStudy.challenges_tag || '',
+          challengeCards: ensureList(
+            caseStudy.challengeCards || caseStudy.challenge_cards,
+            challengeTemplate,
+          ),
+          approachCards: ensureList(
+            caseStudy.approachCards || caseStudy.approach_cards,
+            approachTemplate,
+          ),
+          testimonialTag: caseStudy.testimonialTag || caseStudy.testimonial_tag || '',
+          testimonialTitle: caseStudy.testimonialTitle || caseStudy.testimonial_title || '',
+          testimonialQuote: caseStudy.testimonialQuote || caseStudy.testimonial_quote || '',
+          testimonialAuthor: caseStudy.testimonialAuthor || caseStudy.testimonial_author || '',
+          testimonialAuthorInfo:
+            caseStudy.testimonialAuthorInfo || caseStudy.testimonial_author_info || '',
+          testimonialRating: caseStudy.testimonialRating || caseStudy.testimonial_rating || '',
+          testimonialImage: caseStudy.testimonialImage || caseStudy.testimonial_image || '',
+          recentBlogs: ensureList(caseStudy.recentBlogs || caseStudy.recent_blogs, recentBlogTemplate),
+          contactTag: caseStudy.contactTag || caseStudy.contact_tag || '',
+          contactTitle: caseStudy.contactTitle || caseStudy.contact_title || '',
+          contactButtonLabel: caseStudy.contactButtonLabel || caseStudy.contact_button_label || '',
+          contactLocations: ensureList(
+            caseStudy.contactLocations || caseStudy.contact_locations,
+            contactEntryTemplate,
+          ),
+          contactPhones: ensureList(
+            caseStudy.contactPhones || caseStudy.contact_phones,
+            contactEntryTemplate,
+          ),
+          contactEmails: ensureList(
+            caseStudy.contactEmails || caseStudy.contact_emails,
+            contactEntryTemplate,
+          ),
+          contactFormFields: ensureList(
+            caseStudy.contactFormFields || caseStudy.contact_form_fields,
+            formFieldTemplate,
+          ),
+          ctaTitle: caseStudy.ctaTitle || caseStudy.cta_title || '',
+          ctaDescription: caseStudy.ctaDescription || caseStudy.cta_description || '',
+          ctaBackgroundImage: caseStudy.ctaBackgroundImage || caseStudy.cta_background_image || '',
+          ctaButtonLabel: caseStudy.ctaButtonLabel || caseStudy.cta_button_label || '',
+        });
+      } catch (error) {
+        setInitialLoadError(error?.message || 'Failed to load case study.');
+      } finally {
+        setInitialLoading(false);
+        setTimeout(() => {
+          skipNextAutoSaveRef.current = false;
+        }, 0);
+      }
+    })();
+  }, [searchParams]);
 
   const handleInputChange = (field, value) => {
     setCaseStudyData((prev) => ({
@@ -110,6 +249,136 @@ const CreateCaseStudy = () => {
     }));
   };
 
+  const trimString = (value) => (typeof value === 'string' ? value.trim() : value);
+  const sanitizeList = (list, keys) =>
+    pruneList(list, keys).map((item) => {
+      const cleaned = { ...item };
+      Object.keys(cleaned).forEach((key) => {
+        if (typeof cleaned[key] === 'string') {
+          cleaned[key] = cleaned[key].trim();
+        }
+      });
+      return cleaned;
+    });
+
+  const buildPayload = () => ({
+    heroTitle: trimString(caseStudyData.heroTitle),
+    heroSubtitle: trimString(caseStudyData.heroSubtitle),
+    category: trimString(caseStudyData.category) || null,
+    publishedDate: caseStudyData.publishedDate || null,
+    showLikes: Boolean(caseStudyData.showLikes),
+    featured: Boolean(caseStudyData.featured),
+    tableOfContents: sanitizeList(caseStudyData.tableOfContents, ['title', 'anchor']),
+    progressTag: trimString(caseStudyData.progressTag),
+    progressTitle: trimString(caseStudyData.progressTitle),
+    progressDescription: trimString(caseStudyData.progressDescription),
+    progressBackgroundVideo: trimString(caseStudyData.progressBackgroundVideo),
+    progressButtonLabel: trimString(caseStudyData.progressButtonLabel),
+    metrics: sanitizeList(caseStudyData.metrics, ['label', 'value']),
+    clientTag: trimString(caseStudyData.clientTag),
+    clientName: trimString(caseStudyData.clientName),
+    clientDescription: trimString(caseStudyData.clientDescription),
+    clientImageOne: trimString(caseStudyData.clientImageOne),
+    clientImageTwo: trimString(caseStudyData.clientImageTwo),
+    challengesTag: trimString(caseStudyData.challengesTag),
+    challengeCards: sanitizeList(caseStudyData.challengeCards, ['title', 'description']),
+    approachCards: sanitizeList(caseStudyData.approachCards, ['title', 'description']),
+    testimonialTag: trimString(caseStudyData.testimonialTag),
+    testimonialTitle: trimString(caseStudyData.testimonialTitle),
+    testimonialQuote: trimString(caseStudyData.testimonialQuote),
+    testimonialAuthor: trimString(caseStudyData.testimonialAuthor),
+    testimonialAuthorInfo: trimString(caseStudyData.testimonialAuthorInfo),
+    testimonialRating: trimString(caseStudyData.testimonialRating),
+    testimonialImage: trimString(caseStudyData.testimonialImage),
+    recentBlogs: sanitizeList(caseStudyData.recentBlogs, ['title', 'link']),
+    contactTag: trimString(caseStudyData.contactTag),
+    contactTitle: trimString(caseStudyData.contactTitle),
+    contactButtonLabel: trimString(caseStudyData.contactButtonLabel),
+    contactLocations: sanitizeList(caseStudyData.contactLocations, ['label', 'value']),
+    contactPhones: sanitizeList(caseStudyData.contactPhones, ['label', 'value']),
+    contactEmails: sanitizeList(caseStudyData.contactEmails, ['label', 'value']),
+    contactFormFields: sanitizeList(caseStudyData.contactFormFields, ['label', 'placeholder']),
+    ctaTitle: trimString(caseStudyData.ctaTitle),
+    ctaDescription: trimString(caseStudyData.ctaDescription),
+    ctaBackgroundImage: trimString(caseStudyData.ctaBackgroundImage),
+    ctaButtonLabel: trimString(caseStudyData.ctaButtonLabel),
+  });
+
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    if (!caseStudyData.heroTitle?.trim() || !caseStudyData.heroSubtitle?.trim()) {
+      setAutoSaveState('idle');
+      return;
+    }
+    if (skipNextAutoSaveRef.current) {
+      return;
+    }
+    setAutoSaveState('saving');
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        const payload = buildPayload();
+        if (!caseStudyId) {
+          const result = await createCaseStudy(payload);
+          const createdId = extractCaseStudyId(result);
+          if (createdId) {
+            setCaseStudyId(createdId);
+          }
+        } else {
+          await updateCaseStudy(caseStudyId, payload);
+        }
+        setAutoSaveState('saved');
+        setErrorMessage('');
+      } catch (error) {
+        setAutoSaveState('error');
+        setErrorMessage(error?.message || 'Auto-save failed.');
+      }
+    }, AUTO_SAVE_DELAY_MS);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [caseStudyData, caseStudyId]);
+
+  const handleSubmit = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!caseStudyData.heroTitle?.trim() || !caseStudyData.heroSubtitle?.trim()) {
+      setErrorMessage('Please provide both Case Study Title and Summary.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const payload = buildPayload();
+      if (!caseStudyId) {
+        const result = await createCaseStudy(payload);
+        const createdId = extractCaseStudyId(result);
+        if (createdId) {
+          setCaseStudyId(createdId);
+        }
+      } else {
+        await updateCaseStudy(caseStudyId, payload);
+      }
+      setSuccessMessage('Case study saved successfully.');
+      setErrorMessage('');
+      window.alert('Case study saved successfully.');
+    } catch (error) {
+      setErrorMessage(error?.message || 'Failed to save case study.');
+      window.alert(error?.message || 'Failed to save case study.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const summaryStats = useMemo(
     () => ({
       metricsCount: caseStudyData.metrics.filter((metric) => metric.label || metric.value).length,
@@ -137,7 +406,20 @@ const CreateCaseStudy = () => {
             Capture the challenge, solution, and impact to showcase your success story.
           </p>
         </div>
+        <div className="page-header-status" aria-live="polite">
+          {autoSaveState === 'saving' && <span>Saving…</span>}
+          {autoSaveState === 'saved' && <span>Saved</span>}
+          {autoSaveState === 'error' && <span className="text-error">Auto-save failed</span>}
+        </div>
       </div>
+
+      {initialLoading && <div className="case-study-alert info">Loading case study…</div>}
+      {initialLoadError && <div className="case-study-alert error">{initialLoadError}</div>}
+      {(errorMessage || successMessage) && (
+        <div className={`case-study-alert ${errorMessage ? 'error' : 'success'}`}>
+          {errorMessage || successMessage}
+        </div>
+      )}
 
       <div className="case-study-tabs">
         <div className={`case-study-tab-content ${activeTab === 'form' ? 'active' : ''}`}>
@@ -1241,8 +1523,20 @@ const CreateCaseStudy = () => {
             </Squircle>
 
             <div className="case-study-preview-button">
-              <Button className="case-study-preview-btn" onClick={() => setActiveTab('preview')}>
-                Submit
+              <Button
+                className="case-study-preview-btn secondary"
+                variant="secondary"
+                onClick={() => setActiveTab('preview')}
+              >
+                Preview
+              </Button>
+              <Button
+                className="case-study-preview-btn"
+                variant="primary"
+                onClick={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting ? 'Submitting…' : 'Save Case Study'}
               </Button>
             </div>
           </div>

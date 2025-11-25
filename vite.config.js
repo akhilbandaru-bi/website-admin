@@ -14,4 +14,8 @@ export default defineConfig({
       'react-router-dom': path.resolve(__dirname, 'node_modules/react-router-dom'),
     },
   },
+  server: {
+    port: 5175,   // ← change to any port you want
+    host: true    // optional, allows LAN access
+  }
 })
