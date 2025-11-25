@@ -1,8 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Squircle } from '@squircle-js/react';
+import { useSearchParams } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import './PageTemplate1.css';
 import './CreateService.css';
+import {
+  createService,
+  updateService,
+  getServiceById,
+  extractServiceId,
+} from '../api/services';
 
 const heroIconTemplate = { iconImage: '', iconLabel: '' };
 const serviceTemplate = {
@@ -16,6 +23,27 @@ const supportFeatureTemplate = { title: '', description: '' };
 const supportStatTemplate = { label: '', value: '' };
 const faqTemplate = { question: '', answer: '', order: '' };
 const capabilityTemplate = { title: '', description: '', icon: '' };
+
+const cloneTemplate = (template) => JSON.parse(JSON.stringify(template));
+const ensureList = (value, template) => {
+  if (Array.isArray(value) && value.length) {
+    return value.map((item) => ({ ...cloneTemplate(template), ...item }));
+  }
+  return [cloneTemplate(template)];
+};
+const pruneList = (list, keys) =>
+  (Array.isArray(list) ? list : []).filter((item = {}) =>
+    keys.some((key) => {
+      const value = item[key];
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      if (typeof value === 'number') {
+        return true;
+      }
+      return typeof value === 'string' ? value.trim().length > 0 : Boolean(value);
+    }),
+  );
 
 const initialServiceData = {
   heroTag: '',
@@ -59,6 +87,91 @@ const initialServiceData = {
 const CreateService = () => {
   const [activeTab, setActiveTab] = useState('form');
   const [serviceData, setServiceData] = useState(initialServiceData);
+  const [serviceId, setServiceId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [autoSaveState, setAutoSaveState] = useState('idle');
+  const autoSaveTimerRef = useRef(null);
+  const isMountedRef = useRef(false);
+  const skipNextAutoSaveRef = useRef(false);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [initialLoadError, setInitialLoadError] = useState('');
+  const [searchParams] = useSearchParams();
+  const AUTO_SAVE_DELAY_MS = 1200;
+
+  useEffect(() => {
+    const idParam = searchParams.get('id');
+    if (!idParam) {
+      return;
+    }
+    setInitialLoading(true);
+    setInitialLoadError('');
+    skipNextAutoSaveRef.current = true;
+    (async () => {
+      try {
+        const response = await getServiceById(idParam);
+        const service = response?.service || response?.data || response;
+        if (!service || typeof service !== 'object') {
+          setInitialLoadError('Service not found.');
+          return;
+        }
+        setServiceId(service.id || service._id || idParam);
+        setServiceData({
+          ...initialServiceData,
+          heroTag: service.heroTag || service.hero_tag || '',
+          heroTitle: service.heroTitle || service.hero_title || '',
+          heroSubtitle: service.heroSubtitle || service.hero_subtitle || '',
+          heroBackgroundImage: service.heroBackgroundImage || service.hero_background_image || '',
+          heroIcons: ensureList(service.heroIcons || service.hero_icons, heroIconTemplate),
+          servicesTag: service.servicesTag || service.services_tag || '',
+          servicesTitle: service.servicesTitle || service.services_title || '',
+          servicesDescription: service.servicesDescription || service.services_description || '',
+          servicesList: ensureList(service.servicesList || service.services_list, serviceTemplate),
+          supportTag: service.supportTag || service.support_tag || '',
+          supportTitle: service.supportTitle || service.support_title || '',
+          supportDescription: service.supportDescription || service.support_description || '',
+          supportImage: service.supportImage || service.support_image || '',
+          supportCtaLabel: service.supportCtaLabel || service.support_cta_label || '',
+          supportCtaPlaceholder:
+            service.supportCtaPlaceholder || service.support_cta_placeholder || '',
+          supportFeatures: ensureList(
+            service.supportFeatures || service.support_features,
+            supportFeatureTemplate,
+          ),
+          supportStats: ensureList(
+            service.supportStats || service.support_stats,
+            supportStatTemplate,
+          ),
+          faqTag: service.faqTag || service.faq_tag || '',
+          faqTitle: service.faqTitle || service.faq_title || '',
+          faqDescription: service.faqDescription || service.faq_description || '',
+          faqImage: service.faqImage || service.faq_image || '',
+          faqItems: ensureList(service.faqItems || service.faq_items, faqTemplate),
+          capabilitiesTag: service.capabilitiesTag || service.capabilities_tag || '',
+          capabilitiesTitle: service.capabilitiesTitle || service.capabilities_title || '',
+          capabilitiesDescription:
+            service.capabilitiesDescription || service.capabilities_description || '',
+          capabilitiesImage: service.capabilitiesImage || service.capabilities_image || '',
+          capabilityCards: ensureList(
+            service.capabilityCards || service.capability_cards,
+            capabilityTemplate,
+          ),
+          ctaTitle: service.ctaTitle || service.cta_title || '',
+          ctaDescription: service.ctaDescription || service.cta_description || '',
+          ctaBackgroundImage: service.ctaBackgroundImage || service.cta_background_image || '',
+          ctaButtonLabel: service.ctaButtonLabel || service.cta_button_label || '',
+        });
+      } catch (error) {
+        setInitialLoadError(error?.message || 'Failed to load service.');
+      } finally {
+        setInitialLoading(false);
+        setTimeout(() => {
+          skipNextAutoSaveRef.current = false;
+        }, 0);
+      }
+    })();
+  }, [searchParams]);
 
   const handleInputChange = (field, value) => {
     setServiceData((prev) => ({
@@ -90,6 +203,127 @@ const CreateService = () => {
       ...prev,
       [listName]: prev[listName].filter((_, idx) => idx !== index),
     }));
+  };
+
+  const trimString = (value) => (typeof value === 'string' ? value.trim() : value);
+  const sanitizeList = (list, keys) =>
+    pruneList(list, keys).map((item) => {
+      const cleaned = { ...item };
+      Object.keys(cleaned).forEach((key) => {
+        if (typeof cleaned[key] === 'string') {
+          cleaned[key] = cleaned[key].trim();
+        }
+      });
+      return cleaned;
+    });
+
+  const buildPayload = () => ({
+    heroTag: trimString(serviceData.heroTag),
+    heroTitle: trimString(serviceData.heroTitle),
+    heroSubtitle: trimString(serviceData.heroSubtitle),
+    heroBackgroundImage: trimString(serviceData.heroBackgroundImage),
+    heroIcons: sanitizeList(serviceData.heroIcons, ['iconImage', 'iconLabel']),
+    servicesTag: trimString(serviceData.servicesTag),
+    servicesTitle: trimString(serviceData.servicesTitle),
+    servicesDescription: trimString(serviceData.servicesDescription),
+    servicesList: sanitizeList(serviceData.servicesList, ['title', 'description', 'image']),
+    supportTag: trimString(serviceData.supportTag),
+    supportTitle: trimString(serviceData.supportTitle),
+    supportDescription: trimString(serviceData.supportDescription),
+    supportImage: trimString(serviceData.supportImage),
+    supportCtaLabel: trimString(serviceData.supportCtaLabel),
+    supportCtaPlaceholder: trimString(serviceData.supportCtaPlaceholder),
+    supportFeatures: sanitizeList(serviceData.supportFeatures, ['title', 'description']),
+    supportStats: sanitizeList(serviceData.supportStats, ['label', 'value']),
+    faqTag: trimString(serviceData.faqTag),
+    faqTitle: trimString(serviceData.faqTitle),
+    faqDescription: trimString(serviceData.faqDescription),
+    faqImage: trimString(serviceData.faqImage),
+    faqItems: sanitizeList(serviceData.faqItems, ['question', 'answer']),
+    capabilitiesTag: trimString(serviceData.capabilitiesTag),
+    capabilitiesTitle: trimString(serviceData.capabilitiesTitle),
+    capabilitiesDescription: trimString(serviceData.capabilitiesDescription),
+    capabilitiesImage: trimString(serviceData.capabilitiesImage),
+    capabilityCards: sanitizeList(serviceData.capabilityCards, ['title', 'description']),
+    ctaTitle: trimString(serviceData.ctaTitle),
+    ctaDescription: trimString(serviceData.ctaDescription),
+    ctaBackgroundImage: trimString(serviceData.ctaBackgroundImage),
+    ctaButtonLabel: trimString(serviceData.ctaButtonLabel),
+  });
+
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    if (!serviceData.heroTitle?.trim() || !serviceData.servicesTitle?.trim()) {
+      setAutoSaveState('idle');
+      return;
+    }
+    if (skipNextAutoSaveRef.current) {
+      return;
+    }
+    setAutoSaveState('saving');
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        const payload = buildPayload();
+        if (!serviceId) {
+          const result = await createService(payload);
+          const createdId = extractServiceId(result);
+          if (createdId) {
+            setServiceId(createdId);
+          }
+        } else {
+          await updateService(serviceId, payload);
+        }
+        setAutoSaveState('saved');
+        setErrorMessage('');
+      } catch (error) {
+        setAutoSaveState('error');
+        setErrorMessage(error?.message || 'Auto-save failed.');
+      }
+    }, AUTO_SAVE_DELAY_MS);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [serviceData, serviceId]);
+
+  const handleSubmit = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!serviceData.heroTitle?.trim() || !serviceData.servicesTitle?.trim()) {
+      setErrorMessage('Please provide both Hero Title and Services Section Title.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const payload = buildPayload();
+      if (!serviceId) {
+        const result = await createService(payload);
+        const createdId = extractServiceId(result);
+        if (createdId) {
+          setServiceId(createdId);
+        }
+      } else {
+        await updateService(serviceId, payload);
+      }
+      setSuccessMessage('Service saved successfully.');
+      setErrorMessage('');
+      window.alert('Service saved successfully.');
+    } catch (error) {
+      setErrorMessage(error?.message || 'Failed to save service.');
+      window.alert(error?.message || 'Failed to save service.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const summaryStats = useMemo(
@@ -125,7 +359,20 @@ const CreateService = () => {
             Configure a new service offering, add descriptions, pricing, and supporting assets.
           </p>
         </div>
+        <div className="page-header-status" aria-live="polite">
+          {autoSaveState === 'saving' && <span>Saving…</span>}
+          {autoSaveState === 'saved' && <span>Saved</span>}
+          {autoSaveState === 'error' && <span className="text-error">Auto-save failed</span>}
+        </div>
       </div>
+
+      {initialLoading && <div className="service-alert info">Loading service…</div>}
+      {initialLoadError && <div className="service-alert error">{initialLoadError}</div>}
+      {(errorMessage || successMessage) && (
+        <div className={`service-alert ${errorMessage ? 'error' : 'success'}`}>
+          {errorMessage || successMessage}
+        </div>
+      )}
 
       <div className="service-tabs">
         <div className={`service-tab-content ${activeTab === 'form' ? 'active' : ''}`}>
@@ -927,8 +1174,20 @@ const CreateService = () => {
             </Squircle>
 
             <div className="service-preview-button">
-              <Button className="service-preview-btn" onClick={() => setActiveTab('preview')}>
-                Submit
+              <Button
+                className="service-preview-btn secondary"
+                variant="secondary"
+                onClick={() => setActiveTab('preview')}
+              >
+                Preview
+              </Button>
+              <Button
+                className="service-preview-btn"
+                variant="primary"
+                onClick={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting ? 'Submitting…' : 'Save Service'}
               </Button>
             </div>
           </div>
